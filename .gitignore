@@ -41,7 +41,7 @@ coverage.xml
 # --- Django / Flask / FastAPI specifics (safe to include even if unused) ---
 *.sqlite3
 db.sqlite3
-instance/
+instance/accessibility.db
 .env
 *.pid
 
