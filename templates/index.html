@@ -10,49 +10,90 @@
 <body>
     <div class="header">
         <h1>Urban Access Map</h1>
-        <p>Mapping accessible routes and venues</p>
-    </div>
-    
-    <div id="map"></div>
-    
-    <div class="controls">
-        <button id="locate">Locate Me</button>
-        <button id="report">Report Issue</button>
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search location...">
+            <button id="search-btn">Search</button>
+        </div>
     </div>
 
-    <div id="report-modal" class="report-modal">
-    <div class="modal-content">
-        <h3>Report Accessibility Issue</h3>
-        <form id="report-form">
-            <input type="hidden" id="report-lat" name="lat">
-            <input type="hidden" id="report-lon" name="lon">
-            
-            <div class="form-group">
-                <label for="issue_type">Issue Type:</label>
-                <select id="issue_type" name="issue_type" required>
-                    <option value="">Select an issue</option>
-                    <option value="stairs">Stairs / No Ramp</option>
-                    <option value="narrow">Narrow Pathway</option>
-                    <option value="surface">Uneven Surface</option>
-                    <option value="door">Difficult Door</option>
-                    <option value="bathroom">Inaccessible Bathroom</option>
-                    <option value="other">Other</option>
-                </select>
+    <div class="main-container">
+        <!-- Sidebar for controls and amenities list -->
+        <div class="sidebar">
+            <div class="controls">
+                <button id="locate" class="btn-primary">📍 Locate Me</button>
+                <button id="load-amenities" class="btn-primary">📊 Load Amenities</button>
+                <button id="report" class="btn-secondary">⚠️ Report Issue</button>
             </div>
-            
-            <div class="form-group">
-                <label for="description">Additional Details:</label>
-                <textarea id="description" name="description" placeholder="Describe the accessibility issue..."></textarea>
+
+            <!-- Filters -->
+            <div class="filters">
+                <h3>Filters</h3>
+                <div class="filter-group">
+                    <label>Wheelchair Access:</label>
+                    <select id="wheelchair-filter">
+                        <option value="all">All</option>
+                        <option value="yes">Accessible</option>
+                        <option value="no">Not Accessible</option>
+                        <option value="unknown">Unknown</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Venue Type:</label>
+                    <select id="type-filter">
+                        <option value="all">All Types</option>
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <input type="text" id="search-amenities" placeholder="Search amenities...">
+                </div>
             </div>
-            
-            <div class="form-actions">
-                <button type="button" id="cancel-report">Cancel</button>
-                <button type="submit">Submit Report</button>
+
+            <!-- Amenities List -->
+            <div class="amenities-list">
+                <h3>Nearby Venues <span id="amenities-count">(0)</span></h3>
+                <div id="amenities-container"></div>
             </div>
-        </form>
+        </div>
+
+        <!-- Map -->
+        <div id="map"></div>
     </div>
+
+    <!-- Report Modal -->
+    <div id="report-modal" class="modal">
+        <div class="modal-content">
+            <h3>Report Accessibility Issue</h3>
+            <form id="report-form">
+                <input type="hidden" id="report-lat" name="lat">
+                <input type="hidden" id="report-lon" name="lon">
+                
+                <div class="form-group">
+                    <label for="issue_type">Issue Type:</label>
+                    <select id="issue_type" name="issue_type" required>
+                        <option value="">Select an issue</option>
+                        <option value="stairs">Stairs / No Ramp</option>
+                        <option value="narrow">Narrow Pathway</option>
+                        <option value="surface">Uneven Surface</option>
+                        <option value="door">Difficult Door</option>
+                        <option value="bathroom">Inaccessible Bathroom</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Additional Details:</label>
+                    <textarea id="description" name="description" placeholder="Describe the accessibility issue..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="cancel-report">Cancel</button>
+                    <button type="submit">Submit Report</button>
+                </div>
+            </form>
+        </div>
     </div>
-    
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>
 </body>

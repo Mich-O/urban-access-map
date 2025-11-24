@@ -2,9 +2,11 @@ let map;
 let userMarker;
 let amenityMarkers = [];
 let reportMarkers = [];
+let allAmenities = [];
+let amenitiesLoaded = false;
 
 function initMap() {
-    map = L.map('map').setView([40.7128, -74.0060], 13);
+    map = L.map('map').setView([-1.9434, 30.1288], 13);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
@@ -12,20 +14,55 @@ function initMap() {
     
     setupEventListeners();
     loadExistingReports();
-    loadNearbyAmenities(map.getCenter()); // Load amenities on initial map load
 }
 
 function setupEventListeners() {
     document.getElementById('locate').addEventListener('click', locateUser);
+    document.getElementById('load-amenities').addEventListener('click', loadAmenitiesForCurrentView);
     document.getElementById('report').addEventListener('click', showReportModal);
     document.getElementById('cancel-report').addEventListener('click', hideReportModal);
     document.getElementById('report-form').addEventListener('submit', submitReport);
-    map.on('moveend', onMapMove);
+    document.getElementById('search-btn').addEventListener('click', searchLocation);
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchLocation();
+    });
+    
+    document.getElementById('wheelchair-filter').addEventListener('change', applyFilters);
+    document.getElementById('type-filter').addEventListener('change', applyFilters);
+    document.getElementById('search-amenities').addEventListener('input', applyFilters);
+    
+    map.on('moveend', () => {
+        if (amenitiesLoaded) {
+            loadAmenitiesForCurrentView();
+        }
+    });
 }
 
-function onMapMove() {
-    console.log('Map moved to:', map.getCenter());
-    loadNearbyAmenities(map.getCenter());
+async function searchLocation() {
+    const query = document.getElementById('search-input').value.trim();
+    if (!query) return;
+    
+    try {
+        showLoadingState(true);
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const results = await response.json();
+        
+        if (results.length > 0) {
+            const result = results[0];
+            const lat = parseFloat(result.lat);
+            const lon = parseFloat(result.lon);
+            
+            map.setView([lat, lon], 14);
+            document.getElementById('search-input').value = result.display_name;
+        } else {
+            alert('Location not found');
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+        alert('Error searching for location');
+    } finally {
+        showLoadingState(false);
+    }
 }
 
 function locateUser() {
@@ -44,7 +81,6 @@ function locateUser() {
                     .openPopup();
                 
                 map.setView(userLocation, 16);
-                loadNearbyAmenities(userLocation);
             },
             (error) => {
                 alert('Location access denied or unavailable');
@@ -53,64 +89,175 @@ function locateUser() {
     }
 }
 
+function loadAmenitiesForCurrentView() {
+    const center = map.getCenter();
+    loadNearbyAmenities(center);
+}
+
 function loadNearbyAmenities(location) {
-    // Extract lat/lng from Leaflet object
-    const lat = location.lat;
-    const lng = location.lng;
-    
-    if (!lat || !lng || lat === undefined || lng === undefined) {
-        console.log('Invalid location, skipping');
+    if (!location || !location.lat || !location.lng) {
+        showError('Invalid location');
         return;
     }
 
-    console.log('Loading amenities for:', lat, lng);
-    
-    clearAmenityMarkers();
+    showLoadingState(true);
     
     const radius = 1000;
     
-    fetch(`/api/amenities?lat=${lat}&lon=${lng}&radius=${radius}`)
+    fetch(`/api/amenities?lat=${location.lat}&lon=${location.lng}&radius=${radius}`)
         .then(response => {
-            console.log('API response status:', response.status);
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.error || `Server error: ${response.status}`);
+                });
+            }
             return response.json();
         })
         .then(amenities => {
-            console.log('Found', amenities.length, 'amenities');
-            amenities.forEach(amenity => {
-                const amenityLat = amenity.lat || (amenity.center && amenity.center.lat);
-                const amenityLon = amenity.lon || (amenity.center && amenity.center.lon);
-                
-                if (amenityLat && amenityLon) {
-                    const wheelchair = amenity.tags.wheelchair;
-                    let iconColor = 'gray';
-                    
-                    if (wheelchair === 'yes') iconColor = 'green';
-                    if (wheelchair === 'no') iconColor = 'red';
-                    
-                    const marker = L.marker([amenityLat, amenityLon], {
-                        icon: L.divIcon({
-                            className: `amenity-marker ${wheelchair}`,
-                            html: `<div style="background: ${iconColor}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
-                            iconSize: [16, 16]
-                        })
-                    }).addTo(map);
-                    
-                    const name = amenity.tags.name || 'Unnamed Venue';
-                    const type = amenity.tags.amenity || 'Unknown';
-                    
-                    marker.bindPopup(`
-                        <strong>${name}</strong><br>
-                        Type: ${type}<br>
-                        Wheelchair: ${wheelchair || 'unknown'}
-                    `);
-                    
-                    amenityMarkers.push(marker);
-                }
-            });
+            if (amenities && amenities.error) {
+                throw new Error(amenities.error);
+            }
+            
+            if (!Array.isArray(amenities)) {
+                throw new Error('Invalid response from server');
+            }
+            
+            allAmenities = amenities;
+            amenitiesLoaded = true;
+            displayAmenities(amenities);
+            updateAmenityTypesFilter(amenities);
+            showLoadingState(false);
         })
         .catch(error => {
             console.error('Error loading amenities:', error);
+            showError(`Failed to load amenities: ${error.message}`);
+            showLoadingState(false);
+            allAmenities = [];
+            displayAmenities([]);
         });
+}
+
+function displayAmenities(amenities) {
+    clearAmenityMarkers();
+    
+    amenities.forEach(amenity => {
+        const lat = amenity.lat || (amenity.center && amenity.center.lat);
+        const lon = amenity.lon || (amenity.center && amenity.center.lon);
+        
+        if (lat && lon) {
+            const wheelchair = amenity.tags.wheelchair;
+            const amenityType = amenity.tags.amenity || 'unknown';
+            
+            let iconColor = 'gray';
+            if (wheelchair === 'yes') iconColor = 'green';
+            if (wheelchair === 'no') iconColor = 'red';
+            
+            const marker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                    className: `amenity-marker ${wheelchair}`,
+                    html: `<div style="background: ${iconColor}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
+                    iconSize: [16, 16]
+                })
+            }).addTo(map);
+            
+            const name = amenity.tags.name || 'Unnamed Venue';
+            
+            marker.bindPopup(`
+                <strong>${name}</strong><br>
+                Type: ${amenityType}<br>
+                Wheelchair: ${wheelchair || 'unknown'}
+            `);
+            
+            marker.on('click', () => {
+                map.setView([lat, lon], 16);
+            });
+            
+            amenityMarkers.push(marker);
+        }
+    });
+    
+    updateAmenitiesList(amenities);
+}
+
+function updateAmenitiesList(amenities) {
+    const container = document.getElementById('amenities-container');
+    const countElement = document.getElementById('amenities-count');
+    
+    countElement.textContent = `(${amenities.length})`;
+    
+    if (amenities.length === 0) {
+        container.innerHTML = '<div class="error-message">No amenities found in this area</div>';
+        return;
+    }
+    
+    container.innerHTML = amenities.map(amenity => {
+        const name = amenity.tags.name || 'Unnamed Venue';
+        const type = amenity.tags.amenity || 'Unknown';
+        const wheelchair = amenity.tags.wheelchair || 'unknown';
+        const lat = amenity.lat || (amenity.center && amenity.center.lat);
+        const lon = amenity.lon || (amenity.center && amenity.center.lon);
+        
+        let accessibilityClass = '';
+        if (wheelchair === 'yes') accessibilityClass = 'accessible';
+        if (wheelchair === 'no') accessibilityClass = 'not-accessible';
+        
+        return `
+            <div class="amenity-item ${accessibilityClass}" 
+                 onclick="centerOnAmenity(${lat}, ${lon})">
+                <div class="amenity-name">${name}</div>
+                <div class="amenity-details">
+                    ${type} • ${wheelchair === 'yes' ? '♿ Accessible' : wheelchair === 'no' ? '❌ Not Accessible' : '❓ Unknown'}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function centerOnAmenity(lat, lon) {
+    map.setView([lat, lon], 16);
+}
+
+function updateAmenityTypesFilter(amenities) {
+    const typeFilter = document.getElementById('type-filter');
+    const types = [...new Set(amenities.map(a => a.tags.amenity).filter(Boolean))];
+    
+    typeFilter.innerHTML = '<option value="all">All Types</option>' +
+        types.map(type => `<option value="${type}">${type}</option>`).join('');
+}
+
+function applyFilters() {
+    const wheelchairFilter = document.getElementById('wheelchair-filter').value;
+    const typeFilter = document.getElementById('type-filter').value;
+    const searchFilter = document.getElementById('search-amenities').value.toLowerCase();
+    
+    const filteredAmenities = allAmenities.filter(amenity => {
+        const wheelchair = amenity.tags.wheelchair || 'unknown';
+        const type = amenity.tags.amenity || 'unknown';
+        const name = (amenity.tags.name || '').toLowerCase();
+        
+        if (wheelchairFilter !== 'all' && wheelchair !== wheelchairFilter) return false;
+        if (typeFilter !== 'all' && type !== typeFilter) return false;
+        if (searchFilter && !name.includes(searchFilter)) return false;
+        
+        return true;
+    });
+    
+    displayAmenities(filteredAmenities);
+}
+
+function showLoadingState(loading) {
+    const button = document.getElementById('load-amenities');
+    if (loading) {
+        button.textContent = 'Loading...';
+        button.disabled = true;
+    } else {
+        button.textContent = '📊 Load Amenities';
+        button.disabled = false;
+    }
+}
+
+function showError(message) {
+    alert(message);
 }
 
 function clearAmenityMarkers() {
@@ -154,6 +301,8 @@ function submitReport(event) {
             alert('Report submitted successfully!');
             hideReportModal();
             addReportMarker(reportData);
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
         }
     })
     .catch(error => {
