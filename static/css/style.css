@@ -11,165 +11,168 @@ body {
     overflow: hidden;
 }
 
-/* Header */
+/* Mobile First - Default styles for phones */
 .header {
     background: #2c3e50;
     color: white;
     padding: 1rem;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .header h1 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
+    text-align: center;
 }
 
 .search-box {
     display: flex;
-    gap: 10px;
+    gap: 8px;
 }
 
 .search-box input {
     padding: 8px 12px;
     border: none;
     border-radius: 4px;
-    width: 300px;
+    flex: 1;
+    font-size: 14px;
 }
 
 .search-box button {
-    padding: 8px 16px;
+    padding: 8px 12px;
     background: #3498db;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    white-space: nowrap;
 }
 
-/* Main layout */
+/* Main layout - mobile vertical */
 .main-container {
     display: flex;
-    height: calc(100vh - 68px);
+    flex-direction: column;
+    height: calc(100vh - 120px);
 }
 
-/* Sidebar */
+/* Sidebar - full width on mobile */
 .sidebar {
-    width: 350px;
+    width: 100%;
     background: #f8f9fa;
-    border-right: 1px solid #dee2e6;
-    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px;
     overflow-y: auto;
+    max-height: 40vh;
 }
 
 .controls {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
 }
 
 .btn-primary {
-    padding: 12px;
     background: #3498db;
     color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
 }
 
 .btn-secondary {
-    padding: 12px;
     background: #e74c3c;
     color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
 }
 
-.btn-primary:hover { background: #2980b9; }
-.btn-secondary:hover { background: #c0392b; }
-
-/* Filters */
+/* Filters - stacked on mobile */
 .filters {
     background: white;
-    padding: 15px;
+    padding: 12px;
     border-radius: 6px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .filters h3 {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     color: #2c3e50;
+    font-size: 1rem;
 }
 
 .filter-group {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .filter-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     font-weight: bold;
     color: #555;
+    font-size: 14px;
 }
 
 .filter-group select,
 .filter-group input {
     width: 100%;
-    padding: 8px;
+    padding: 6px;
     border: 1px solid #ddd;
     border-radius: 4px;
+    font-size: 14px;
 }
 
 /* Amenities list */
 .amenities-list h3 {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     color: #2c3e50;
+    font-size: 1rem;
 }
 
 #amenities-count {
     color: #7f8c8d;
-    font-size: 0.9em;
+    font-size: 0.8em;
 }
 
 .amenity-item {
     background: white;
-    padding: 12px;
-    margin-bottom: 8px;
+    padding: 10px;
+    margin-bottom: 6px;
     border-radius: 6px;
     border-left: 4px solid #bdc3c7;
     cursor: pointer;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    font-size: 14px;
 }
 
 .amenity-item.accessible { border-left-color: #27ae60; }
 .amenity-item.not-accessible { border-left-color: #e74c3c; }
 
-.amenity-item:hover {
-    background: #f8f9fa;
-}
-
 .amenity-name {
     font-weight: bold;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .amenity-details {
-    font-size: 0.9em;
+    font-size: 0.8em;
     color: #666;
 }
 
-/* Map */
+/* Map - full height remaining */
 #map {
-    flex: 1;
-    height: 100%;
+    height: 60vh;
+    width: 100%;
 }
 
-/* Modal styles (existing) */
+/* Modal styles */
 .modal {
     display: none;
     position: fixed;
@@ -183,39 +186,105 @@ body {
 
 .modal-content {
     background: white;
-    margin: 50px auto;
-    padding: 20px;
-    width: 90%;
+    margin: 20px auto;
+    padding: 15px;
+    width: 95%;
     max-width: 400px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.form-group {
-    margin-bottom: 15px;
+/* Tablet Breakpoint (768px and up) */
+@media (min-width: 768px) {
+    .header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+        text-align: left;
+    }
+    
+    .search-box input {
+        width: 250px;
+    }
+    
+    .main-container {
+        flex-direction: row;
+        height: calc(100vh - 80px);
+    }
+    
+    .sidebar {
+        width: 350px;
+        max-height: none;
+        border-bottom: none;
+        border-right: 1px solid #dee2e6;
+    }
+    
+    .controls {
+        grid-template-columns: 1fr;
+    }
+    
+    #map {
+        height: 100%;
+        flex: 1;
+    }
+    
+    .amenity-item {
+        padding: 12px;
+        font-size: 14px;
+    }
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+/* Small Desktop Breakpoint (1024px and up) */
+@media (min-width: 1024px) {
+    .sidebar {
+        width: 400px;
+    }
+    
+    .controls {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .filters {
+        padding: 15px;
+    }
+    
+    .amenity-item {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
 }
 
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+/* Large Desktop Breakpoint (1200px and up) */
+@media (min-width: 1200px) {
+    .sidebar {
+        width: 450px;
+    }
+    
+    .header {
+        padding: 1rem 2rem;
+    }
+    
+    .search-box input {
+        width: 300px;
+    }
+    
+    .controls {
+        gap: 12px;
+    }
 }
 
-.form-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-/* Loading state */
+/* Loading and error states */
 .loading {
     opacity: 0.6;
     pointer-events: none;
@@ -227,6 +296,36 @@ body {
     padding: 10px;
     border-radius: 4px;
     margin: 10px 0;
+    font-size: 14px;
+}
+
+/* Utility classes for responsive text */
+.text-sm { font-size: 0.875rem; }
+.text-base { font-size: 1rem; }
+.text-lg { font-size: 1.125rem; }
+
+/* Ensure map controls are touch-friendly on mobile */
+.leaflet-bar a {
+    width: 40px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    font-size: 20px !important;
+}
+
+/* Hide some elements on very small screens */
+@media (max-width: 360px) {
+    .header h1 {
+        font-size: 1.1rem;
+    }
+    
+    .search-box {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .search-box button {
+        width: 100%;
+    }
 }
 
 .high-contrast {
