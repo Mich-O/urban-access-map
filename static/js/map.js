@@ -130,10 +130,10 @@ function loadNearbyAmenities(location) {
         })
         .catch(error => {
             console.error('Error loading amenities:', error);
-            showError(`Failed to load amenities: ${error.message}`);
+            showError(`Temporary server issue - showing empty results`);
             showLoadingState(false);
             allAmenities = [];
-            displayAmenities([]);
+            displayAmenities([]); // Show empty state
         });
 }
 
@@ -338,5 +338,13 @@ function addReportMarker(report) {
     
     reportMarkers.push(marker);
 }
+
+// Add keyboard controls
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') map.panBy([0, -100]);
+    if (e.key === 'ArrowDown') map.panBy([0, 100]);
+    if (e.key === 'ArrowLeft') map.panBy([-100, 0]);
+    if (e.key === 'ArrowRight') map.panBy([100, 0]);
+});
 
 document.addEventListener('DOMContentLoaded', initMap);

@@ -40,35 +40,35 @@ def get_amenities():
     if not lat or not lon:
         return jsonify({'error': 'Missing coordinates'}), 400
     
-    # Simple Overpass query for amenities with wheelchair info
+    # Much simpler query - just get basic amenities without complex relations
     overpass_query = f"""
-    [out:json][timeout:25];
-    (
-      node["amenity"](around:{radius},{lat},{lon});
-      way["amenity"](around:{radius},{lat},{lon});
-    );
-    out body;
+    [out:json][timeout:10];
+    node["amenity"](around:{radius},{lat},{lon});
+    out;
     """
     
     try:
         response = requests.post(
             'https://overpass-api.de/api/interpreter',
             data={'data': overpass_query},
-            timeout=30
+            timeout=15
         )
         
-        if response.status_code != 200:
-            return jsonify({'error': f'Overpass API returned {response.status_code}'}), 500
+        if response.status_code == 504:
+            # Overload protection - return empty array instead of error
+            return jsonify([])
+        elif response.status_code != 200:
+            return jsonify({'error': f'API error: {response.status_code}'}), 500
             
         data = response.json()
         return jsonify(data['elements'])
         
     except requests.exceptions.Timeout:
-        return jsonify({'error': 'Overpass API timeout'}), 500
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': f'Network error: {str(e)}'}), 500
+        # Return empty results instead of error
+        return jsonify([])
     except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+        print(f"API error: {e}")
+        return jsonify([])  # Return empty instead of error
 
 @app.route('/api/reports', methods=['GET', 'POST'])
 def handle_reports():

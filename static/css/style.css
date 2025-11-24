@@ -228,3 +228,11 @@ body {
     border-radius: 4px;
     margin: 10px 0;
 }
+
+.high-contrast {
+    filter: contrast(1.5) brightness(1.2);
+}
+
+.high-contrast .amenity-item {
+    border-width: 2px;
+}
