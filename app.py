@@ -1,5 +1,4 @@
 from flask import Flask, render_template, jsonify, request
-from werkzeug.middleware.proxy_fix import ProxyFix
 import requests
 import sqlite3
 import os
@@ -7,7 +6,6 @@ from datetime import datetime
 
 app = Flask(__name__)
 app.config['DATABASE'] = os.path.join('instance', 'accessibility.db')
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 def get_db():
     db = sqlite3.connect(app.config['DATABASE'])
